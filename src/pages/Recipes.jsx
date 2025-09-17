@@ -4,6 +4,7 @@ import RecipeCard from "../components/RecipeCard";
 function Recipes() {
   const [prepOpen, setPrepOpen] = useState(false);
   const [cookOpen, setCookOpen] = useState(false);
+
   const [prepValue, setPrepValue] = useState("");
   const [cookValue, setCookValue] = useState("");
   const [search, setSearch] = useState("");
@@ -14,35 +15,19 @@ function Recipes() {
   const prepOptions = ["0 min", "5 min", "10 min"];
   const cookOptions = ["0 min", "5 min", "10 min", "15 min", "20 min"];
 
-  const prepMap = { "0 min": 0, "5 min": 5, "10 min": 10 };
-  const cookMap = {
-    "0 min": 0,
-    "5 min": 5,
-    "10 min": 10,
-    "15 min": 15,
-    "20 min": 20,
-  };
-
   useEffect(() => {
     setLoading(true);
-    const params = new URLSearchParams();
-    if (prepValue) params.append("prepMinutes", prepMap[prepValue]);
-    if (cookValue) params.append("cookMinutes", cookMap[cookValue]);
-    if (search)
-      params.append("slug", search.trim().toLowerCase().replace(/\s+/g, "-"));
-
-    fetch(
-      `https://json-api.uz/api/project/recipes/recipes?${params.toString()}`
-    )
+    let url = "https://json-api.uz/api/project/recipes/recipes?";
+    if (prepValue) url += `prepMinutes=${parseInt(prepValue)}&`;
+    if (cookValue) url += `cookMinutes=${parseInt(cookValue)}&`;
+    if (search) url += `slug=${search.toLowerCase().replace(/\s+/g, "-")}`;
+    fetch(url)
       .then((res) => res.json())
-      .then((res) => {
-        setRecipes(res.data);
+      .then((data) => {
+        setRecipes(Array.isArray(data) ? data : data.data);
         setLoading(false);
       })
-      .catch((err) => {
-        console.error("Error:", err);
-        setLoading(false);
-      });
+      .catch(() => setLoading(false));
   }, [prepValue, cookValue, search]);
 
   return (
@@ -86,7 +71,13 @@ function Recipes() {
                     <span className="ml-2">{option}</span>
                   </label>
                 ))}
-                <button className="clear-btn" onClick={() => setPrepValue("")}>
+                <button
+                  className="clear-btn"
+                  onClick={() => {
+                    setPrepValue("");
+                    setPrepOpen(false);
+                  }}
+                >
                   Clear
                 </button>
               </div>
@@ -120,7 +111,13 @@ function Recipes() {
                     <span className="ml-2">{option}</span>
                   </label>
                 ))}
-                <button className="clear-btn" onClick={() => setCookValue("")}>
+                <button
+                  className="clear-btn"
+                  onClick={() => {
+                    setCookValue("");
+                    setCookOpen(false);
+                  }}
+                >
                   Clear
                 </button>
               </div>
@@ -146,7 +143,9 @@ function Recipes() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-[32px] justify-items-center max-w-[1200px] mx-auto px-4 lg:px-0">
         {loading ? (
-          <p className="col-span-full text-center text-preset-6 mt-5">Loading...</p>
+          <p className="col-span-full text-center text-preset-6 mt-5">
+            Loading...
+          </p>
         ) : recipes.length > 0 ? (
           recipes.map((recipe) => (
             <div key={recipe.id} className="w-full lg:max-w-[376px]">
@@ -159,7 +158,6 @@ function Recipes() {
           </p>
         )}
       </div>
-
     </div>
   );
 }
